@@ -7,7 +7,7 @@
 </script>
 {% set rows = 0 %}
 <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
-	<td><img src="<{{ template_path }}/images/general/blank.gif" width="10" height="1" border="0"></td>
+	<td><img src="{{ template_path }}/images/general/blank.gif" width="10" height="1" border="0"></td>
 	<td>
         {{ hook(constant('HOOK_CHARACTERS_BEFORE_INFORMATIONS')) }}
 		{% if canEdit %}
@@ -142,7 +142,7 @@
 			{% set rows = rows + 1 %}
 			<tr bgcolor="{{ getStyle(rows) }}">
 				<td valign="top">Comment:</td>
-				<td>{{ comment|raw }}</td>
+				<td style="word-break: break-all">{{ comment|raw }}</td>
 			</tr>
 			{% endif %}
 
@@ -156,6 +156,8 @@
 		<br/>
 		<table border="0" width="100%">
 			<tr>
+				{{ hook(constant('HOOK_CHARACTERS_BEFORE_SKILLS')) }}
+
 				{% if config.characters.skills %}
 				<!-- SKILLS -->
 				<td width="30%" valign="top">
@@ -176,6 +178,8 @@
 				<!-- SKILLS_END -->
 				{% endif %}
 
+				{{ hook(constant('HOOK_CHARACTERS_AFTER_SKILLS')) }}
+
 				{% if quests_enabled %}
 				<!-- QUESTS -->
 				<td width="40%" valign="top">
@@ -195,6 +199,8 @@
 				</td>
 				<!-- QUESTS_END -->
 				{% endif %}
+
+				{{ hook(constant('HOOK_CHARACTERS_AFTER_QUESTS')) }}
 
 				{% if config.characters.equipment %}
 				<!-- EQUIPMENT -->
@@ -231,8 +237,12 @@
 				</td>
 				<!-- EQUIPMENT_END -->
 				{% endif %}
+
+				{{ hook(constant('HOOK_CHARACTERS_AFTER_EQUIPMENT')) }}
 			</tr>
 		</table>
+
+		{{ hook(constant('HOOK_CHARACTERS_BEFORE_DEATHS')) }}
 
 		{% if deaths|length > 0 %}
 		<!-- DEATHS -->
@@ -396,7 +406,8 @@
 							<tr>
 								<td>
 									<input type="hidden" name="name" value="{{ player.getName() }}"/>
-									<input type="image" name="View {{ player.getName() }}" alt="View {{ player.getName() }}" src="{{ template_path }}/images/global/buttons/sbutton_view.gif" border="0" width="120" height="18"/>
+									{% set button_name = "View" %}
+									{{ include('buttons.base.html.twig') }}
 								</td>
 							</tr>
 						</form>

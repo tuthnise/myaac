@@ -21,7 +21,7 @@ if(isset($config['boxes']))
 		<?php
 			if(PAGE !== 'news') {
 				if(strpos(URI, 'subtopic=') !== false) {
-					$tmp = $_REQUEST['subtopic'];
+					$tmp = escapeHtml($_REQUEST['subtopic']);
 					if($tmp === 'accountmanagement') {
 						$tmp = 'accountmanage';
 					}
@@ -452,4 +452,3 @@ function logo_monster()
 	global $config;
 	return str_replace(" ", "", trim(strtolower($config['logo_monster'])));
 }
-?>

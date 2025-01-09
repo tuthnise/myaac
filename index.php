@@ -74,6 +74,14 @@ if((!isset($config['installed']) || !$config['installed']) && file_exists(BASE .
 	throw new RuntimeException('Setup detected that <b>install/</b> directory exists. Please visit <a href="' . BASE_URL . 'install">this</a> url to start MyAAC Installation.<br/>Delete <b>install/</b> directory if you already installed MyAAC.<br/>Remember to REFRESH this page when you\'re done!');
 }
 
+require_once SYSTEM . 'init.php';
+require_once SYSTEM . 'template.php';
+
+// verify myaac tables exists in database
+if(!$db->hasTable('myaac_account_actions')) {
+	throw new RuntimeException('Seems that the table <strong>myaac_account_actions</strong> of MyAAC doesn\'t exist in the database. This is a fatal error. You can try to reinstall MyAAC by visiting <a href="' . BASE_URL . 'install">this</a> url.');
+}
+
 $found = false;
 if(empty($uri) || isset($_REQUEST['template'])) {
 	$_REQUEST['p'] = 'news';
@@ -81,7 +89,11 @@ if(empty($uri) || isset($_REQUEST['template'])) {
 }
 else {
 	$tmp = strtolower($uri);
-	if(!preg_match('/[^A-z0-9_\-]/', $uri) && file_exists(SYSTEM . 'pages/' . $tmp . '.php')) {
+	if (!preg_match('/[^A-z0-9_\-]/', $uri) && file_exists(TEMPLATES . $template_name . '/pages/' . $tmp . '.php')) {
+		$_REQUEST['p'] = $uri;
+		$found = true;
+	}
+	else if (!preg_match('/[^A-z0-9_\-]/', $uri) && file_exists(SYSTEM . 'pages/' . $tmp . '.php')) {
 		$_REQUEST['p'] = $uri;
 		$found = true;
 	}
@@ -133,13 +145,13 @@ else {
 			'/^houses\/view\/?$/' => array('subtopic' => 'houses', 'page' => 'view')
 		);
 
-		foreach($rules as $rule => $redirect) {
+		foreach ($rules as $rule => $redirect) {
 			if (preg_match($rule, $uri)) {
 				$tmp = explode('/', $uri);
 				/* @var $redirect array */
-				foreach($redirect as $key => $value) {
+				foreach ($redirect as $key => $value) {
 
-					if(strpos($value, '$') !== false) {
+					if (strpos($value, '$') !== false) {
 						$value = str_replace('$' . $value[1], $tmp[$value[1]], $value);
 					}
 
@@ -152,6 +164,12 @@ else {
 			}
 		}
 	}
+}
+
+// handle ?fbclid=x, etc. (show news page)
+if (!$found && count($_GET) > 0 && !isset($_REQUEST['subtopic']) && !isset($_REQUEST['p']) && !in_array($_SERVER['QUERY_STRING'], getDatabasePages())) {
+	$_REQUEST['p'] = $_REQUEST['subtopic'] = 'news';
+	$found = true;
 }
 
 // define page visited, so it can be used within events system
@@ -174,18 +192,10 @@ define('PAGE', $page);
 
 $template_place_holders = array();
 
-require_once SYSTEM . 'init.php';
-
-// verify myaac tables exists in database
-if(!$db->hasTable('myaac_account_actions')) {
-	throw new RuntimeException('Seems that the table <strong>myaac_account_actions</strong> of MyAAC doesn\'t exist in the database. This is a fatal error. You can try to reinstall MyAAC by visiting <a href="' . BASE_URL . 'install">this</a> url.');
-}
-
 // event system
 require_once SYSTEM . 'hooks.php';
 $hooks = new Hooks();
 $hooks->load();
-require_once SYSTEM . 'template.php';
 require_once SYSTEM . 'login.php';
 require_once SYSTEM . 'status.php';
 
@@ -288,6 +298,7 @@ if($config['backward_support']) {
 	$config['site'] = &$config;
 	$config['server'] = &$config['lua'];
 	$config['site']['shop_system'] = $config['gifts_system'];
+	$config['site']['gallery_page'] = true;
 
 	if(!isset($config['vdarkborder']))
 		$config['vdarkborder'] = '#505050';
@@ -335,12 +346,10 @@ if($load_it)
 				)) . $content;
 		}
 	} else {
-		$file = TEMPLATES . $template_name . '/pages/' . $page . '.php';
-		if(!@file_exists($file) || preg_match('/[^A-z0-9_\-]/', $page))
-		{
-			$file = SYSTEM . 'pages/' . $page . '.php';
-			if(!@file_exists($file) || preg_match('/[^A-z0-9_\-]/', $page))
-			{
+		$file = TEMPLATES . "$template_name/pages/$page.php";
+		if(!@file_exists($file) || preg_match('/[^A-z0-9_\-]/', $page)) {
+			$file = SYSTEM . "pages/$page.php";
+			if(!@file_exists($file) || preg_match('/[^A-z0-9_\-]/', $page)) {
 				$page = '404';
 				$file = SYSTEM . 'pages/404.php';
 			}

@@ -14,12 +14,14 @@ $links_to_pages = '';
 $section_id = isset($_REQUEST['id']) ? (int) $_REQUEST['id'] : null;
 
 if($section_id == null || !isset($sections[$section_id])) {
-	echo "Board with this id does't exist.";
+	$errors[] = "Board with this id does't exist.";
+	displayErrorBoxWithBackButton($errors, getLink('forum'));
 	return;
 }
 
 if(!Forum::hasAccess($section_id)) {
-	echo "You don't have access to this board.";
+	$errors[] = "You don't have access to this board.";
+	displayErrorBoxWithBackButton($errors, getLink('forum'));
 	return;
 }
 
@@ -33,7 +35,7 @@ for($i = 0; $i < $threads_count['threads_count'] / $config['forum_threads_per_pa
 		$links_to_pages .= '<b>'.($i + 1).' </b>';
 }
 echo '<a href="' . getLink('forum') . '">Boards</a> >> <b>'.$sections[$section_id]['name'].'</b>';
-if(!$sections[$section_id]['closed'] || Forum::isModerator())
+if($logged && (!$sections[$section_id]['closed'] || Forum::isModerator()))
 {
 	echo '<br /><br />
 		<a href="?subtopic=forum&action=new_thread&section_id='.$section_id.'"><img src="images/forum/topic.gif" border="0" /></a>';
@@ -60,7 +62,7 @@ if(isset($last_threads[0]))
 		if(Forum::isModerator())
 		{
 			echo '<a href="?subtopic=forum&action=move_thread&id='.$thread['id'].'"\')"><span style="color:darkgreen">[MOVE]</span></a>';
-			echo '<a href="?subtopic=forum&action=remove_post&id='.$thread['id'].'" onclick="return confirm(\'Are you sure you want remove thread > '.$thread['post_topic'].' <?\')"><span style="color: red">[REMOVE]</span></a>  ';
+			echo '<a href="?subtopic=forum&action=remove_post&id='.$thread['id'].'" onclick="return confirm(\'Are you sure you want remove thread > '.htmlspecialchars($thread['post_topic']).' <?\')"><span style="color: red">[REMOVE]</span></a>  ';
 		}
 
 		$player->load($thread['player_id']);
@@ -71,7 +73,7 @@ if(isset($last_threads[0]))
 		$player_account = $player->getAccount();
 		$canEditForum = $player_account->hasFlag(FLAG_CONTENT_FORUM) || $player_account->isAdmin();
 
-		echo '<a href="' . getForumThreadLink($thread['id']) . '">'.($canEditForum ? $thread['post_topic'] : htmlspecialchars($thread['post_topic'])) . '</a><br /><small>'.($canEditForum ? substr(strip_tags($thread['post_text']), 0, 50) : htmlspecialchars(substr($thread['post_text'], 0, 50))).'...</small></td><td>' . getPlayerLink($thread['name']) . '</td><td>'.(int) $thread['replies'].'</td><td>'.(int) $thread['views'].'</td><td>';
+		echo '<a href="' . getForumThreadLink($thread['id']) . '">'.htmlspecialchars($thread['post_topic']) . '</a><br /><small>'.($canEditForum ? substr(strip_tags($thread['post_text']), 0, 50) : htmlspecialchars(substr($thread['post_text'], 0, 50))).'...</small></td><td>' . getPlayerLink($thread['name']) . '</td><td>'.(int) $thread['replies'].'</td><td>'.(int) $thread['views'].'</td><td>';
 		if($thread['last_post'] > 0)
 		{
 			$last_post = $db->query("SELECT `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = ".(int) $thread['id']." AND `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` ORDER BY `post_date` DESC LIMIT 1")->fetch();
@@ -85,10 +87,8 @@ if(isset($last_threads[0]))
 		echo '</td></tr>';
 	}
 	echo '</table>';
-	if(!$sections[$section_id]['closed'] || Forum::isModerator())
+	if($logged && (!$sections[$section_id]['closed'] || Forum::isModerator()))
 		echo '<br /><a href="?subtopic=forum&action=new_thread&section_id='.$section_id.'"><img src="images/forum/topic.gif" border="0" /></a>';
 }
 else
 	echo '<h3>No threads in this board.</h3>';
-
-?>

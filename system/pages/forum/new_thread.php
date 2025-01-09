@@ -13,7 +13,7 @@ defined('MYAAC') or die('Direct access not allowed!');
 if(Forum::canPost($account_logged))
 {
 	$players_from_account = $db->query('SELECT `players`.`name`, `players`.`id` FROM `players` WHERE `players`.`account_id` = '.(int) $account_logged->getId())->fetchAll();
-	$section_id = isset($_REQUEST['section_id']) ? $_REQUEST['section_id'] : null;
+	$section_id = $_REQUEST['section_id'] ?? null;
 	if($section_id !== null) {
 		echo '<a href="' . getLink('forum') . '">Boards</a> >> <a href="' . getForumBoardLink($section_id) . '">' . $sections[$section_id]['name'] . '</a> >> <b>Post new thread</b><br />';
 		if(isset($sections[$section_id]['name']) && Forum::hasAccess($section_id)) {
@@ -26,24 +26,20 @@ if(Forum::canPost($account_logged))
 			$post_topic = isset($_REQUEST['topic']) ? stripslashes($_REQUEST['topic']) : '';
 			$smile = (isset($_REQUEST['smile']) ? (int)$_REQUEST['smile'] : 0);
 			$html = (isset($_REQUEST['html']) ? (int)$_REQUEST['html'] : 0);
+
+			if (!superAdmin()) {
+				$html = 0;
+			}
+
 			$saved = false;
 			if (isset($_REQUEST['save'])) {
-				$errors = array();
+				$length = strlen($post_topic);
+				if ($length < 1 || $length > 60)
+					$errors[] = "Too short or too long topic (Length: $length letters). Minimum 1 letter, maximum 60 letters.";
 
-				$lenght = 0;
-				for ($i = 0; $i < strlen($post_topic); $i++) {
-					if (ord($post_topic[$i]) >= 33 && ord($post_topic[$i]) <= 126)
-						$lenght++;
-				}
-				if ($lenght < 1 || strlen($post_topic) > 60)
-					$errors[] = 'Too short or too long topic (short: ' . $lenght . ' long: ' . strlen($post_topic) . ' letters). Minimum 1 letter, maximum 60 letters.';
-				$lenght = 0;
-				for ($i = 0; $i < strlen($text); $i++) {
-					if (ord($text[$i]) >= 33 && ord($text[$i]) <= 126)
-						$lenght++;
-				}
-				if ($lenght < 1 || strlen($text) > 15000)
-					$errors[] = 'Too short or too long post (short: ' . $lenght . ' long: ' . strlen($text) . ' letters). Minimum 1 letter, maximum 15000 letters.';
+				$length = strlen($text);
+				if ($length < 1 || $length > 15000)
+					$errors[] = "Too short or too long post (Length: $length letters). Minimum 1 letter, maximum 15000 letters.";
 
 				if ($char_id == 0)
 					$errors[] = 'Please select a character.';
@@ -69,7 +65,7 @@ if(Forum::canPost($account_logged))
 				}
 				if (count($errors) == 0) {
 					$saved = true;
-					$db->query("INSERT INTO `" . FORUM_TABLE_PREFIX . "forum` (`first_post` ,`last_post` ,`section` ,`replies` ,`views` ,`author_aid` ,`author_guid` ,`post_text` ,`post_topic` ,`post_smile`, `post_html` ,`post_date` ,`last_edit_aid` ,`edit_date`, `post_ip`) VALUES ('0', '" . time() . "', '" . (int)$section_id . "', '0', '0', '" . $account_logged->getId() . "', '" . (int)$char_id . "', " . $db->quote($text) . ", " . $db->quote($post_topic) . ", '" . (int)$smile . "', '" . (int)$html . "', '" . time() . "', '0', '0', '" . $_SERVER['REMOTE_ADDR'] . "')");
+					$db->query("INSERT INTO `" . FORUM_TABLE_PREFIX . "forum` (`first_post` ,`last_post` ,`section` ,`replies` ,`views` ,`author_aid` ,`author_guid` ,`post_text` ,`post_topic` ,`post_smile`, `post_html` ,`post_date` ,`last_edit_aid` ,`edit_date`, `post_ip`) VALUES ('0', '" . time() . "', '" . (int)$section_id . "', '0', '0', '" . $account_logged->getId() . "', '" . (int)$char_id . "', " . $db->quote($text) . ", " . $db->quote($post_topic) . ", '" . (int)$smile . "', '" . (int)$html . "', '" . time() . "', '0', '0', '" . get_browser_real_ip() . "')");
 					$thread_id = $db->lastInsertId();
 					$db->query("UPDATE `" . FORUM_TABLE_PREFIX . "forum` SET `first_post`=" . (int)$thread_id . " WHERE `id` = " . (int)$thread_id);
 					header('Location: ' . getForumThreadLink($thread_id));
@@ -93,13 +89,17 @@ if(Forum::canPost($account_logged))
 				));
 			}
 		}
-		else
-			echo 'Board with ID ' . $board_id . ' doesn\'t exist.';
+		else {
+			$errors[] = "Board with ID $section_id doesn't exist.";
+			displayErrorBoxWithBackButton($errors, getLink('forum'));
+		}
 	}
-	else
-		echo 'Please enter section_id.';
+	else {
+		$errors[] = 'Please enter section_id.';
+		displayErrorBoxWithBackButton($errors, getLink('forum'));
+	}
 }
-else
-	echo 'Your account is banned, deleted or you don\'t have any player with level '.$config['forum_level_required'].' on your account. You can\'t post.';
-
-?>
+else {
+	$errors[] = 'Your account is banned, deleted or you don\'t have any player with level '.$config['forum_level_required'].' on your account. You can\'t post.';
+	displayErrorBoxWithBackButton($errors, getLink('forum'));
+}

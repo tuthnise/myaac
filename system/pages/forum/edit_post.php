@@ -14,7 +14,8 @@ if(Forum::canPost($account_logged))
 {
 	$post_id = isset($_REQUEST['id']) ? (int) $_REQUEST['id'] : false;
 	if(!$post_id) {
-		echo 'Please enter post id.';
+		$errors[] = 'Please enter post id.';
+		displayErrorBoxWithBackButton($errors, getLink('forum'));
 		return;
 	}
 
@@ -22,7 +23,7 @@ if(Forum::canPost($account_logged))
 	if(isset($thread['id']))
 	{
 		$first_post = $db->query("SELECT `" . FORUM_TABLE_PREFIX . "forum`.`author_guid`, `" . FORUM_TABLE_PREFIX . "forum`.`author_aid`, `" . FORUM_TABLE_PREFIX . "forum`.`first_post`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`post_text`, `" . FORUM_TABLE_PREFIX . "forum`.`post_smile`, `" . FORUM_TABLE_PREFIX . "forum`.`id`, `" . FORUM_TABLE_PREFIX . "forum`.`section` FROM `" . FORUM_TABLE_PREFIX . "forum` WHERE `" . FORUM_TABLE_PREFIX . "forum`.`id` = ".(int) $thread['first_post']." LIMIT 1")->fetch();
-		echo '<a href="' . getLink('forum') . '">Boards</a> >> <a href="' . getForumBoardLink($thread['section']) . '">'.$sections[$thread['section']]['name'].'</a> >> <a href="' . getForumThreadLink($thread['first_post']) . '">'.$first_post['post_topic'].'</a> >> <b>Edit post</b>';
+		echo '<a href="' . getLink('forum') . '">Boards</a> >> <a href="' . getForumBoardLink($thread['section']) . '">'.$sections[$thread['section']]['name'].'</a> >> <a href="' . getForumThreadLink($thread['first_post']) . '">'.htmlspecialchars($first_post['post_topic']).'</a> >> <b>Edit post</b>';
 		if(Forum::hasAccess($thread['section'] && ($account_logged->getId() == $thread['author_aid'] || Forum::isModerator())))
 		{
 			$char_id = $post_topic = $text = $smile = $html = null;
@@ -35,24 +36,22 @@ if(Forum::canPost($account_logged))
 				$post_topic = stripslashes(trim($_REQUEST['topic']));
 				$smile = isset($_REQUEST['smile']) ? (int)$_REQUEST['smile'] : 0;
 				$html = isset($_REQUEST['html']) ? (int)$_REQUEST['html'] : 0;
-				$lenght = 0;
-				for($i = 0; $i < strlen($post_topic); $i++)
-				{
-					if(ord($post_topic[$i]) >= 33 && ord($post_topic[$i]) <= 126)
-						$lenght++;
+
+				if (!superAdmin()) {
+					$html = 0;
 				}
-				if(($lenght < 1 || strlen($post_topic) > 60) && $thread['id'] == $thread['first_post'])
-					$errors[] = 'Too short or too long topic (short: '.$lenght.' long: '.strlen($post_topic).' letters). Minimum 1 letter, maximum 60 letters.';
-				$lenght = 0;
-				for($i = 0; $i < strlen($text); $i++)
-				{
-					if(ord($text[$i]) >= 33 && ord($text[$i]) <= 126)
-						$lenght++;
-				}
-				if($lenght < 1 || strlen($text) > 15000)
-					$errors[] = 'Too short or too long post (short: '.$lenght.' long: '.strlen($text).' letters). Minimum 1 letter, maximum 15000 letters.';
+
+				$length = strlen($post_topic);
+				if(($length < 1 || $length > 60) && $thread['id'] == $thread['first_post'])
+					$errors[] = "Too short or too long topic (Length: $length letters). Minimum 1 letter, maximum 60 letters.";
+
+				$length = strlen($text);
+				if($length < 1 || $length > 15000)
+					$errors[] = "Too short or too long post (Length: $length letters). Minimum 1 letter, maximum 15000 letters.";
+
 				if($char_id == 0)
 					$errors[] = 'Please select a character.';
+
 				if(empty($post_topic) && $thread['id'] == $thread['first_post'])
 					$errors[] = 'Thread topic can\'t be empty.';
 
@@ -104,13 +103,17 @@ if(Forum::canPost($account_logged))
 				));
 			}
 		}
-		else
-			echo '<br/>You are not an author of this post.';
+		else {
+			$errors[] = 'You are not an author of this post.';
+			displayErrorBoxWithBackButton($errors, getLink('forum'));
+		}
 	}
-	else
-		echo "<br/>Post with ID " . $post_id . " doesn't exist.";
+	else {
+		$errors[] = "Post with ID $post_id doesn't exist.";
+		displayErrorBoxWithBackButton($errors, getLink('forum'));
+	}
 }
-else
-	echo "<br/>Your account is banned, deleted or you don't have any player with level " . $config['forum_level_required'] . " on your account. You can't post.";
-
-?>
+else {
+	$errors[] = "Your account is banned, deleted or you don't have any player with level " . $config['forum_level_required'] . " on your account. You can't post.";
+	displayErrorBoxWithBackButton($errors, getLink('forum'));
+}

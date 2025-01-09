@@ -2,12 +2,21 @@ Thumbs.db
 .DS_Store
 .idea
 
+#
+/.htaccess
+
 # composer
 composer.lock
 vendor
 
 # npm
 node_modules
+tools/ext
+
+# cypress
+cypress.env.json
+cypress/e2e/2-advanced-examples
+cypress/screenshots
 
 # created by release.sh
 releases
@@ -28,6 +37,12 @@ images/guilds/*
 images/editor/*
 !images/editor/index.html
 
+# gallery images
+images/gallery/*
+!images/gallery/index.html
+!images/gallery/demon.jpg
+!images/gallery/demon_thumb.gif
+
 # cache
 system/cache/*
 !system/cache/index.html
@@ -37,7 +52,7 @@ system/cache/*
 
 # php sessions
 system/php_sessions/*
-!system/php_sessions//index.html
+!system/php_sessions/index.html
 
 # logs
 system/logs/*

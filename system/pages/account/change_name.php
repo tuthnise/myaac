@@ -33,6 +33,10 @@ else
 
 		if(empty($errors))
 		{
+			if(!Validator::characterName($name)) {
+				$errors[] = Validator::getLastError();
+			}
+
 			if(!admin() && !Validator::newCharacterName($name))
 				$errors[] = Validator::getLastError();
 		}
@@ -43,6 +47,10 @@ else
 			if($player->isLoaded()) {
 				$player_account = $player->getAccount();
 				if($account_logged->getId() == $player_account->getId()) {
+					if ($player->isDeleted()) {
+						$errors[] = 'This character is deleted.';
+					}
+
 					if($player->isOnline()) {
 						$errors[] = 'This character is online.';
 					}
@@ -61,7 +69,7 @@ else
 					}
 				}
 				else {
-					$errors[] = 'Character <b>' . $player_name . '</b> is not on your account.';
+					$errors[] = 'Character is not on your account.';
 				}
 			}
 			else {
@@ -82,5 +90,3 @@ else
 		));
 	}
 }
-
-?>

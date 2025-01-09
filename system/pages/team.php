@@ -9,7 +9,7 @@
  * @link      https://my-aac.org
  */
 defined('MYAAC') or die('Direct access not allowed!');
-$title = 'Gamemasters List';
+$title = 'Support in game';
 
 if($config['account_country'])
 	require SYSTEM . 'countries.conf.php';
@@ -45,6 +45,7 @@ foreach($groupList as $id => $group)
 	$members = array();
 	foreach($group_members as $member)
 	{
+		/** @var OTS_Player $member */
 		if(!admin() && $member->isHidden())
 			continue;
 
@@ -73,4 +74,3 @@ foreach($groupList as $id => $group)
 $twig->display('team.html.twig', array(
 	'groupmember' => $groupMember
 ));
-?>

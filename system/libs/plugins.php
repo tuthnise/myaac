@@ -74,6 +74,10 @@ class Plugins {
 			if (isset($plugin['hooks'])) {
 				foreach ($plugin['hooks'] as $_name => $info) {
 					if (defined('HOOK_'. $info['type'])) {
+						if (strpos($info['type'], 'HOOK_') !== false) {
+							$info['type'] = str_replace('HOOK_', '', $info['type']);
+						}
+
 						$hook = constant('HOOK_'. $info['type']);
 						$hooks[] = ['name' => $_name, 'type' => $hook, 'file' => $info['file']];
 					} else {
@@ -400,5 +404,61 @@ class Plugins {
 		$string = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $string);
 
 		return $string;
+	}
+
+	/**
+	 * Install menus
+	 * Helper function for plugins
+	 *
+	 * @param string $templateName
+	 * @param array $menus
+	 */
+	public static function installMenus($templateName, $menus, $clearOld = false)
+	{
+		global $db;
+
+		if ($clearOld) {
+			$db->query('DELETE FROM `' . TABLE_PREFIX . 'menu` WHERE `template` = ' . $db->quote($templateName));
+		}
+
+		// check if menus already exist
+		$query = $db->query('SELECT `id` FROM `' . TABLE_PREFIX . 'menu` WHERE `template` = ' . $db->quote($templateName) . ' LIMIT 1;');
+		if ($query->rowCount() > 0) {
+			return;
+		}
+
+		foreach ($menus as $category => $_menus) {
+			$i = 0;
+			foreach ($_menus as $name => $link) {
+				$color = '';
+				$blank = 0;
+
+				if (is_array($link)) {
+					if (isset($link['name'])) {
+						$name = $link['name'];
+					}
+					if (isset($link['color'])) {
+						$color = $link['color'];
+					}
+					if (isset($link['blank'])) {
+						$blank = $link['blank'] ? 1 : 0;
+					}
+
+					$link = $link['link'];
+				}
+
+				$insert_array = [
+					'template' => $templateName,
+					'name' => $name,
+					'link' => $link,
+					'category' => $category,
+					'ordering' => $i++,
+					'blank' => $blank,
+					'color' => $color,
+				];
+
+				$db->insert(TABLE_PREFIX . 'menu', $insert_array);
+			}
+		}
 	}
 }

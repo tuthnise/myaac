@@ -1,5 +1,171 @@
 # Changelog
 
+## [0.8.21 - 09.01.2025]
+
+### Added
+* support for button_color (red, green, blue) (https://github.com/slawkens/myaac/commit/b2c9eb474513650a014352d820602b8007eb3bf3)
+
+### Changed
+* Set default_socket_timeout for ipinfo.io checkup (https://github.com/slawkens/myaac/commit/e09fe517747e4f462c72395ede39759bf308d171)
+
+### Fixed
+* XSS in forum (https://github.com/slawkens/myaac/commit/580b888b1dd1317d7ccf5f888536159c3bfe4324)
+* move_thread by unauthorized user (https://github.com/slawkens/myaac/commit/19d3e15c114de65ef6c379e4da66d32138a0e7c4)
+* change sex wrong price deducted (https://github.com/slawkens/myaac/commit/39b19ed4c8724385ee80f7d02219e84f6b3f5d95)
+* fix for TFS 1.4.2 exception on creating character, where conditions column is NULL (https://github.com/slawkens/myaac/commit/5a68d204bb24392d424efde4133b0a3222e788bb)
+
+## [0.8.20 - 26.11.2024]
+
+Small fix regarding the latest release and the linux system.
+
+Download this one, instead of the 0.8.19 if you are using linux.
+
+If you are using 0.8.19, make this update:
+
+The fix is to make this change in the system/libs/hooks.php
+
+Change
+```
+require_once LIBS . 'src/plugins.php';
+```
+
+Into:
+```
+require_once LIBS . 'src/Plugins.php';
+```
+
+Yeah, we just changed 'p' to 'P' - that's just case-sensitive nature of linux.
+
+## [0.8.19 - 19.11.2024]
+
+### Added
+* syntactic sugar for db structure changes (https://github.com/slawkens/myaac/commit/e0036a3e32e8c37c28665dd7ae18ac9b8fc167d9)
+* add "None" vocation to highscores (https://github.com/slawkens/myaac/commit/7f4737631dfcb6ec255c6d9301304d3bf222a033)
+* new hooks in account manage + create (https://github.com/slawkens/myaac/commit/d40178104b0f411b9672102c49a4b87ac16e1779)
+* new functions: getGuildNameById($id) + getGuildLogoById($id) + Plugins::installMenus($templateName, $menus, $clearOld = false) (https://github.com/slawkens/myaac/commit/de1bb37bcb6d111fbdf185ef9c2fec7e7f05053e + https://github.com/slawkens/myaac/commit/d1c5a189c3b182a36933ed507c6ae36b61fe1d45 + https://github.com/slawkens/myaac/commit/5a953ce901522d080aa16fcfcd268e9544bf6e1a)
+
+### Changed
+* set default encryption to sha1 (https://github.com/slawkens/myaac/commit/55b8645d3f38c47f4aafc1906625b676c429cdd5)
+* prefer get_browser_real_ip() over REMOTE_ADDR (cause of Cloudflare and similar services) (https://github.com/slawkens/myaac/commit/b5bbae62b09db50a73bfa3e288245ea718005aa9)
+* allow account_create_character_create even if account_mail_verify is activated (https://github.com/slawkens/myaac/commit/1edf8833c844b25372017e4affaf12aa02cdce7a)
+* better https detection (patched from develop) (https://github.com/slawkens/myaac/commit/d73aceb272d0615244fcfd0998d75e6c6c15d3fe)
+* require login before create new thread (#261, @anyeor)
+* better tables.headline.html.twig (patched from 1.0) (https://github.com/slawkens/myaac/commit/71ef30d35ecb2f876e9b861f211f737302bf408e)
+
+### Fixed
+* bans page fixed functions getPlayerNameByAccount + getPlayerNameById (https://github.com/slawkens/myaac/commit/d39386cfabfa13e5c916ead69e2f8f90fdc47f4f)
+* account verify - do not allow login without verified email (https://github.com/slawkens/myaac/commit/1edf8833c844b25372017e4affaf12aa02cdce7a, Thanks @anyeor)
+* if <flags> is not present in monster.xml (https://github.com/slawkens/myaac/commit/81b6652738a7b04be3980cbf55443a6fbe437b34)
+* $db->update when there is null value (https://github.com/slawkens/myaac/commit/1458b7a412ff6875cebba1b88d380f7f959ee6be)
+* error on $db __destruct saving current script name in CLI (https://github.com/slawkens/myaac/commit/01660bd2b4967315c0e16d2f83c6c39f0b78683d)
+
+## [0.8.18 - 29.05.2024]
+
+### Added
+* hook in guilds page to support guild wars (https://github.com/slawkens/myaac/commit/f875f3cd2059fac5c23a08ce73dd8621a66613e0)
+
+## [0.8.17 - 18.05.2024]
+
+### Added
+* TwigTypeCastingExtension (https://github.com/slawkens/myaac/commit/7181b988e9518320d57486670ca4e2d3b2fe1cfa)
+
+### Fixed
+* fix XSS in creatures.php (https://github.com/slawkens/myaac/commit/02eea950e4fd756e8d5c32e56181986d51f5ac70, @gesior)
+* don't allow redirect to external website (https://github.com/slawkens/myaac/commit/ef62b53cec5a479cc85aa15940ad9ebbcefde876)
+* change_info if account_country is disabled (https://github.com/slawkens/myaac/commit/62d3c198d567541a90900fe2d7ede070e7b1ff68)
+
+### Changed
+* use word-break: break-all in guilds description + character comment (https://github.com/slawkens/myaac/commit/191ad25eb2d4c1cec6f6668da7a345fec0ad2a7f)
+* set default status_ip to 127.0.0.1, most server are hosted locally anyway (https://github.com/slawkens/myaac/commit/2793c41655b47f7db295143a298ccda70f11462b)
+
+## [0.8.16 - 12.02.2024]
+
+### Fixed
+* broken installation
+* database and finish step warnings/errors (https://github.com/slawkens/myaac/pull/245, @danilopucci)
+* silently ignore if the hook does not exist
+
+## [0.8.15 - 09.12.2023]
+
+More security fixes, especially in bugtracker.
+
+## [0-8.14 - 27.11.2023]
+Security fixes.
+
+### Fixed
+* XSS vulnerability in bugtracker (https://github.com/slawkens/myaac/commit/83a91ec540072d319dd338abff45f8d5ebf48190)
+* XSS vulnerability in forum (https://github.com/slawkens/myaac/commit/d1bc63d07ad88a143358cacd2c417891eea74dcc + https://github.com/slawkens/myaac/commit/55dbade8d5280c5baed45e5f7ebc3613b8e9b9e8)
+* Session Fixation (https://github.com/slawkens/myaac/commit/483155cf4c1e3068aaee0d44541dfa61f6223379)
+* displaying ban info on account page (https://github.com/slawkens/myaac/commit/764db0c203d1826ffce3a5a78f83a97e56bd0685)
+
+### Changed
+* Clear some additional cache keys - like database cache (https://github.com/slawkens/myaac/commit/4327b66f915d06dce504211692173606b9ef3b4e)
+
+## [0.8.13 - 16.09.2023]
+
+### Added
+* latest client versions to config (https://github.com/slawkens/myaac/commit/765886f0c782807400c429577cde5e45bd7c308f)
+* patching from develop - twig context for hooks (https://github.com/slawkens/myaac/commit/f1670f4012cc7595433fe0b1937c1f9b15a60b07)
+
+### Fixed
+* fixed XSS vulnerability in some pages (https://github.com/slawkens/myaac/commit/5c3b01aca4f3cfe8abc86b8ce48194b2da87b808)
+
+Nothing more or less!
+
+## [0.8.12 - 07.08.2023]
+I've moved the repository back to my personal account. (Just so you know!)
+
+I will also try to add git commits pointed to each change, lets see if you like it or not - you can comment in discussion, that will be created just after releasing this version :)
+
+### Added
+* forum: better error messages (Suggested by @anyeor) (https://github.com/slawkens/myaac/commit/34725e0257684fe5fa43875cc3a8f587ba04642e)
+* more support for GesiorAAC classes, so some of them will work with MyAAC (https://github.com/slawkens/myaac/commit/a8172a518ff8939c4402349b16c064fcaf855d31)
+* word-break on forum thread & reply (Suggested by @anyeor) (https://github.com/slawkens/myaac/commit/ce4aed0f1719d2aadc749e5238e883e3c10e2686)
+
+### Fixed
+* not working pages/links from database, introduced in 0.8.10 (Thanks to OtLand user - https://otland.net/members/0lo.99657/ for report) (https://github.com/slawkens/myaac/commit/1e874c7027769bd09e772a1cdac75d7e37991256)
+* it was possible to create topic in board that was closed, ommiting the error check (Thanks to @anyeor for report) (https://github.com/slawkens/myaac/commit/0d52978d9fb99869500d35e7676f454ca5eaba14)
+* PHP 8.2 compatibility - removed deprecated functions utf8_encode & utf8_decode (https://github.com/slawkens/myaac/commit/a338fd967cdbcc89e86be4e6b66b2cad2ff23251)
+* guild description not being correctly shown (Reported by @anyeor)  (https://github.com/slawkens/myaac/commit/f2a3ec1185df64ad9084d4ff55790ae4a5b3e5fd, https://github.com/slawkens/myaac/commit/df321154f63d458a4bc7d83bac5e3447b67317a4)
+
+### Removed
+* Some old code for verifying messages length (Reported by @anyeor) (https://github.com/slawkens/myaac/commit/df48363ea4ced4350fd90ffddf57d464ba5afa8b)
+* some info about config failed to load, was never working (https://github.com/slawkens/myaac/commit/7a546e5a41036b0e9e926d337c6f2e3c41c591d2)
+
+## [0.8.11 - 30.06.2023]
+
+### Added
+* new function from 0.9 - Cache::remember($key, $ttl, $callback)
+* new characters page hooks
+* line number & file to exception handler, to easier localize exceptions
+
+### Changed
+* rename to .htaccess.dist, causes some problems on default setup
+* removing unneccessary PHP closing tags to prevent potential issues (by @SRNT-GG)
+* display warning if hook file does not exist
+
+### Fixed
+* important: Not allow create char if limit is exceeded (by @anyeor) could have been used to spam database
+* deleted chars: cannot change comment, name, gender, cannot create guild, cannot be invited, cannot accept invite, cannot be passed leadership to
+* forum: quote and edit post buttons not being shown
+* twig exception thrown when player does not exist, on character change comment (thanks @anyeor)
+* BASE_DIR when accessing /tools
+* do not display warning if HTTP_ACCEPT_LANGUAGE is not set
+
+## [0.8.10 - 18.05.2023]
+
+### Changed
+* PHP 7.2.5 is now required, cause of Twig 2.x
+* allow pages to be placed in templates folder, under pages/ subfolder
+
+### Fixed
+* Twig error with global variable on create account
+* links/redirects from facebook, etc. like ?fbclid=x
+* do not allow to continue install when there is no server database imported
+* cannot go forward when config.local.php cannot be saved
+* when server uses another items serializer
+* small bug on install - please fill all input
+
 ## [0.8.9 - 16.03.2023]
 
 ### Added

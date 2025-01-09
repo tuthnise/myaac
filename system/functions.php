@@ -7,10 +7,9 @@
  * @copyright 2019 MyAAC
  * @link      https://my-aac.org
  */
+defined('MYAAC') or die('Direct access not allowed!');
 
 use Twig\Loader\ArrayLoader as Twig_ArrayLoader;
-
-defined('MYAAC') or die('Direct access not allowed!');
 
 function message($message, $type, $return)
 {
@@ -757,10 +756,10 @@ function get_browser_languages()
 {
 	$ret = array();
 
-	$acceptLang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
-	if(!isset($acceptLang[0]))
+	if(empty($_SERVER['HTTP_ACCEPT_LANGUAGE']))
 		return $ret;
 
+	$acceptLang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 	$languages = strtolower($acceptLang);
 	// $languages = 'pl,en-us;q=0.7,en;q=0.3 ';
 	// need to remove spaces from strings to avoid error
@@ -798,7 +797,7 @@ function get_plugins()
 	$ret = array();
 
 	$path = PLUGINS;
-	foreach(scandir($path, 0) as $file) {
+	foreach(scandir($path, SCANDIR_SORT_ASCENDING) as $file) {
 		$file_ext = pathinfo($file, PATHINFO_EXTENSION);
 		$file_name = pathinfo($file, PATHINFO_FILENAME);
 		if ($file === '.' || $file === '..' || $file === 'disabled' || $file === 'example.json' || $file_ext !== 'json' || is_dir($path . $file))
@@ -924,8 +923,8 @@ function load_config_lua($filename)
 	$config_file = $filename;
 	if(!@file_exists($config_file))
 	{
-		log_append('error.log', '[load_config_file] Fatal error: Cannot load config.lua (' . $filename . '). Error: ' . print_r(error_get_last(), true));
-		throw new RuntimeException('ERROR: Cannot find ' . $filename . ' file. More info in system/logs/error.log');
+		log_append('error.log', '[load_config_file] Fatal error: Cannot load config.lua (' . $filename . ').');
+		throw new RuntimeException('ERROR: Cannot find ' . $filename . ' file.');
 	}
 
 	$result = array();
@@ -1147,9 +1146,30 @@ function clearCache()
 		if ($cache->fetch('failed_logins', $tmp))
 			$cache->delete('failed_logins');
 
-		global $template_name;
-		if ($cache->fetch('template_ini' . $template_name, $tmp))
-			$cache->delete('template_ini' . $template_name);
+		foreach (get_templates() as $template) {
+			if ($cache->fetch('template_ini_' . $template, $tmp)) {
+				$cache->delete('template_ini_' . $template);
+			}
+		}
+
+		if ($cache->fetch('template_menus', $tmp)) {
+			$cache->delete('template_menus');
+		}
+		if ($cache->fetch('database_tables', $tmp)) {
+			$cache->delete('database_tables');
+		}
+		if ($cache->fetch('database_columns', $tmp)) {
+			$cache->delete('database_columns');
+		}
+		if ($cache->fetch('database_checksum', $tmp)) {
+			$cache->delete('database_checksum');
+		}
+		if ($cache->fetch('hooks', $tmp)) {
+			$cache->delete('hooks');
+		}
+		if ($cache->fetch('last_kills', $tmp)) {
+			$cache->delete('last_kills');
+		}
 	}
 
 	deleteDirectory(CACHE . 'signatures', ['index.html'], true);
@@ -1245,7 +1265,70 @@ function getCustomPage($page, &$success)
 }
 
 function escapeHtml($html) {
-	return htmlentities($html, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+	return htmlspecialchars($html);
+}
+
+function getGuildNameById($id)
+{
+	global $db;
+
+	$guild = $db->query('SELECT `name` FROM `guilds` WHERE `id` = ' . (int)$id);
+
+	if ($guild->rowCount() > 0) {
+		return $guild->fetchColumn();
+	}
+
+	return false;
+}
+
+function getGuildLogoById($id)
+{
+	global $db;
+
+	$logo = 'default.gif';
+
+	$query = $db->query('SELECT `logo_name` FROM `guilds` WHERE `id` = ' . (int)$id);
+	if ($query->rowCount() == 1) {
+
+		$query = $query->fetch(PDO::FETCH_ASSOC);
+		$guildLogo = $query['logo_name'];
+
+		if (!empty($guildLogo) && file_exists('images/guilds/' . $guildLogo)) {
+			$logo = $guildLogo;
+		}
+	}
+
+	return BASE_URL . 'images/guilds/' . $logo;
+}
+
+function displayErrorBoxWithBackButton($errors, $action = null) {
+	global $twig;
+	$twig->display('error_box.html.twig', ['errors' => $errors]);
+	$twig->display('account.back_button.html.twig', [
+		'action' => $action ?: getLink('')
+	]);
+}
+
+function getDatabasePages($withHidden = false): array
+{
+	global $db, $logged_access;
+
+	if (!isset($logged_access)) {
+		$logged_access = 1;
+	}
+
+	$pages = $db->query('SELECT `name` FROM ' . TABLE_PREFIX . 'pages WHERE ' . ($withHidden ? '' : '`hidden` != 1 AND ') . '`access` <= ' . $db->quote($logged_access));
+	$ret = [];
+
+	if ($pages->rowCount() < 1) {
+		return $ret;
+	}
+
+	foreach($pages->fetchAll() as $page) {
+		$ret[] = $page['name'];
+	}
+
+	return $ret;
 }
 
 // validator functions

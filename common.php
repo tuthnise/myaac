@@ -23,10 +23,10 @@
  * @copyright 2019 MyAAC
  * @link      https://my-aac.org
  */
-if (version_compare(phpversion(), '5.6', '<')) die('PHP version 5.6 or higher is required.');
+if (version_compare(phpversion(), '7.2.5', '<')) die('PHP version 7.2.5 or higher is required.');
 
 define('MYAAC', true);
-define('MYAAC_VERSION', '0.8.10-dev');
+define('MYAAC_VERSION', '0.8.22-dev');
 define('DATABASE_VERSION', 33);
 define('TABLE_PREFIX', 'myaac_');
 define('START_TIME', microtime(true));
@@ -97,8 +97,12 @@ $size = count($tmp) - 1;
 for($i = 1; $i < $size; $i++)
 	$basedir .= '/' . $tmp[$i];
 
-$basedir = str_replace(array('/admin', '/install'), '', $basedir);
+$basedir = str_replace(array('/admin', '/install', '/tools'), '', $basedir);
 define('BASE_DIR', $basedir);
+
+if (file_exists(BASE . 'config.local.php') && !defined('MYAAC_INSTALL')) {
+	require BASE . 'config.local.php';
+}
 
 if(!IS_CLI) {
 	if (isset($_SERVER['HTTP_HOST'][0])) {
@@ -111,12 +115,21 @@ if(!IS_CLI) {
 		}
 	}
 
-	define('SERVER_URL', 'http' . (isset($_SERVER['HTTPS'][0]) && strtolower($_SERVER['HTTPS']) === 'on' ? 's' : '') . '://' . $baseHost);
+	define('SERVER_URL', 'http' . (isHttps() ? 's' : '') . '://' . $baseHost);
 	define('BASE_URL', SERVER_URL . BASE_DIR . '/');
 	define('ADMIN_URL', SERVER_URL . BASE_DIR . '/admin/');
 
 	//define('CURRENT_URL', BASE_URL . $_SERVER['REQUEST_URI']);
-
-	require SYSTEM . 'exception.php';
+	if(@$config['env'] === 'dev') {
+		require SYSTEM . 'exception.php';
+	}
 }
 require SYSTEM . 'autoload.php';
+
+function isHttps(): bool
+{
+	return
+		(!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+		|| (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+		|| (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+}

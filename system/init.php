@@ -28,11 +28,9 @@ if($config['gzip_output'] && isset($_SERVER['HTTP_ACCEPT_ENCODING']) && strpos($
 	ob_start('ob_gzhandler');
 
 // cache
-require_once SYSTEM . 'libs/cache.php';
+require_once LIBS . 'cache.php';
+require_once LIBS . 'src/Cache.php';
 $cache = Cache::getInstance();
-
-// twig
-require_once SYSTEM . 'twig.php';
 
 // trim values we receive
 if(isset($_POST))
@@ -114,17 +112,20 @@ if(!isset($foundValue)) {
 $config['data_path'] = $foundValue;
 unset($foundValue);
 
-// new config values for compability
+// new config values for compatibility
 if(!isset($config['highscores_ids_hidden']) || count($config['highscores_ids_hidden']) == 0) {
 	$config['highscores_ids_hidden'] = array(0);
 }
 
-$config['account_create_character_create'] = config('account_create_character_create') && (!config('mail_enabled') || !config('account_mail_verify'));
+$config['account_mail_verify'] = config('account_mail_verify') && config('mail_enabled');
 
 // POT
 require_once SYSTEM . 'libs/pot/OTS.php';
 $ots = POT::getInstance();
 require_once SYSTEM . 'database.php';
+
+// twig
+require_once SYSTEM . 'twig.php';
 
 define('USE_ACCOUNT_NAME', $db->hasColumn('accounts', 'name'));
 // load vocation names

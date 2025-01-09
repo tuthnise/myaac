@@ -16,10 +16,16 @@ $twig = new Twig_Environment($twig_loader, array(
 
 $twig_loader->addPath(PLUGINS);
 
+$twig->addGlobal('logged', false);
+$twig->addGlobal('account_logged', new OTS_Account());
+
 if($dev_mode) {
 	$twig->addExtension(new Twig_DebugExtension());
 }
 unset($dev_mode);
+
+require LIBS . 'TwigTypeCastingExtension.php';
+$twig->addExtension(new MyAAC\Twig\Extension\TwigTypeCastingExtension());
 
 $function = new TwigFunction('getStyle', function ($i) {
 	return getStyle($i);
@@ -41,15 +47,23 @@ $function = new TwigFunction('getGuildLink', function ($s, $p) {
 });
 $twig->addFunction($function);
 
-$function = new TwigFunction('hook', function ($hook) {
+$function = new TwigFunction('hook', function ($context, $hook, array $params = []) {
 	global $hooks;
 
 	if(is_string($hook)) {
-		$hook = constant($hook);
+		if (defined($hook)) {
+			$hook = constant($hook);
+		}
+		else {
+			// plugin/template has a hook that this version of myaac does not support
+			// just silently return
+			return;
+		}
 	}
 
-	$hooks->trigger($hook);
-});
+	$params['context'] = $context;
+	$hooks->trigger($hook, $params);
+}, ['needs_context' => true]);
 $twig->addFunction($function);
 
 $function = new TwigFunction('config', function ($key) {

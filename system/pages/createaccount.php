@@ -137,7 +137,13 @@ if($save)
 		$params['account_id'] = $_POST['account'];
 	}
 
+	/**
+	 * two hooks for compatibility
+	 */
 	$hooks->trigger(HOOK_ACCOUNT_CREATE_AFTER_SUBMIT, $params);
+	if (!$hooks->trigger(HOOK_ACCOUNT_CREATE_POST, $params)) {
+		return;
+	}
 
 	if(config('account_create_character_create')) {
 		$character_name = isset($_POST['name']) ? stripslashes(ucwords(strtolower($_POST['name']))) : null;
@@ -166,6 +172,8 @@ if($save)
 		$new_account->setPassword(encrypt($password));
 		$new_account->setEMail($email);
 		$new_account->save();
+
+		$hooks->trigger(HOOK_ACCOUNT_CREATE_AFTER_SAVED, ['account' => $new_account]);
 
 		if($config_salt_enabled)
 			$new_account->setCustomField('salt', $salt);
@@ -211,6 +219,9 @@ if($save)
 			if(_mail($email, 'New account on ' . $config['lua']['serverName'], $body_html))
 			{
 				echo 'Your account has been created.<br/><br/>';
+
+				warning("Before you can login - you need to verify your E-Mail. The verification link has been sent to $email. If the message is not coming - remember to check the SPAM folder.");
+
 				$twig->display('success.html.twig', array(
 					'title' => 'Account Created',
 					'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
@@ -227,14 +238,6 @@ if($save)
 		}
 		else
 		{
-			if(config('account_create_character_create')) {
-				// character creation
-				$character_created = $createCharacter->doCreate($character_name, $character_sex, $character_vocation, $character_town, $new_account, $errors);
-				if (!$character_created) {
-					error('There was an error creating your character. Please create your character later in account management page.');
-				}
-			}
-
 			if($config['account_create_auto_login']) {
 				$_POST['account_login'] = USE_ACCOUNT_NAME ? $account_name : $account_id;
 				$_POST['password_login'] = $password2;
@@ -279,6 +282,15 @@ if($save)
 			}
 		}
 
+		if(config('account_create_character_create')) {
+			// character creation
+			$character_created = $createCharacter->doCreate($character_name, $character_sex, $character_vocation, $character_town, $new_account, $errors);
+			if (!$character_created) {
+				error('There was an error creating your character. Please create your character later in account management page.');
+				error(implode(' ', $errors));
+			}
+		}
+
 		return;
 	}
 }
@@ -290,7 +302,9 @@ if($config['account_country_recognize']) {
 		$country_recognized = $country_session;
 	}
 	else {
-		$info = json_decode(@file_get_contents('http://ipinfo.io/' . $_SERVER['REMOTE_ADDR'] . '/geo'), true);
+		ini_set('default_socket_timeout', 5);
+
+		$info = json_decode(@file_get_contents('https://ipinfo.io/' . get_browser_real_ip() . '/geo'), true);
 		if(isset($info['country'])) {
 			$country_recognized = strtolower($info['country']);
 			setSession('country', $country_recognized);
